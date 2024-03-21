@@ -1,47 +1,46 @@
 using UnityEngine;
 
+// @FIXME: Incorrect behaviour on startup: Shouldn't animate the initial closed state.
 public class ConsoleStateManager : MonoBehaviour
 {
-    private enum State
+    public enum ConsoleState
     {
         Closed,
         OpenSmall,
         OpenBig
     }
 
+    public class Console
+    {
+        public bool IsOpen { get; set; }
+        public ConsoleState State { get; set; }
+    }
+
+    private Console console = new Console 
+    {
+        IsOpen = false,
+        State = ConsoleState.Closed,
+    };
+
     private float animationDuration = 0.3f;
-    private State currentState = State.Closed;
     private float timer;
     private float startY;
     private float targetY;
     private RectTransform rectTransform;
 
-    // @FIXME: Starts with an animation, instead set it to inactive.
+    private ConsoleState currentConsoleState;
+
     void Start()
     {
         rectTransform = GetComponent<RectTransform>();
         startY = -rectTransform.rect.height;
-        UpdateTargetPosition(); // redundant?
-        timer = 0f; // redundant?
+        UpdateTargetPosition();
+        timer = 0f;
     }
 
     void Update()
     {
-        // @TODO:
-        // - Use 'Input System'.
-        // - Also apply the console state logic.
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            ToggleClosed();
-        }
-        else if (Input.GetKeyDown(KeyCode.B))
-        {
-            ToggleOpenSmall();
-        }
-        else if (Input.GetKeyDown(KeyCode.C))
-        {
-            ToggleOpenBig();
-        }
+        checkInput();
 
         if (timer < animationDuration)
         {
@@ -52,50 +51,80 @@ public class ConsoleStateManager : MonoBehaviour
         }
     }
 
-    public void ToggleOpenSmall()
-    {
-        if (currentState != State.OpenSmall)
-        {
-            SetState(State.OpenSmall);
+    // @TODO: Set up Input System.
+    public void checkInput() {
+        if (Input.GetKeyDown(KeyCode.J)) {
+            switch (currentConsoleState) {
+                case ConsoleState.Closed:
+                    ToggleOpenSmall();
+                    break;
+                case ConsoleState.OpenSmall:
+                    ToggleClosed();
+                    break;
+                case ConsoleState.OpenBig:
+                    ToggleClosed();
+                    break;
+            }
+        } else if (Input.GetKeyDown(KeyCode.K)) {
+            switch (currentConsoleState) {
+                case ConsoleState.Closed:
+                    ToggleOpenBig();
+                    break;
+                case ConsoleState.OpenSmall:
+                    ToggleOpenBig();
+                    break;
+                case ConsoleState.OpenBig:
+                    ToggleOpenSmall();
+                    break;
+            }
         }
     }
 
-    public void ToggleOpenBig()
+    private void SetConsoleState(ConsoleState newState)
     {
-        if (currentState != State.OpenBig)
-        {
-            SetState(State.OpenBig);
-        }
-    }
-
-    public void ToggleClosed()
-    {
-        if (currentState != State.Closed)
-        {
-            SetState(State.Closed);
-        }
-    }
-
-    private void SetState(State newState)
-    {
-        currentState = newState;
+        console.State = newState;
+        currentConsoleState = newState;
         startY = rectTransform.anchoredPosition.y;
         UpdateTargetPosition();
         timer = 0f;
     }
 
+    public void ToggleOpenSmall()
+    {
+        if (currentConsoleState != ConsoleState.OpenSmall)
+        {
+            SetConsoleState(ConsoleState.OpenSmall);
+        }
+    }
+
+    public void ToggleOpenBig()
+    {
+        if (currentConsoleState != ConsoleState.OpenBig)
+        {
+            SetConsoleState(ConsoleState.OpenBig);
+        }
+    }
+
+    public void ToggleClosed()
+    {
+        if (currentConsoleState != ConsoleState.Closed)
+        {
+            SetConsoleState(ConsoleState.Closed);
+        }
+    }
+
     private void UpdateTargetPosition()
     {
-        switch (currentState)
+        switch (console.State)
         {
-            case State.Closed:
+            case ConsoleState.Closed:
                 targetY = rectTransform.rect.height;
                 break;
-            case State.OpenSmall:
+            case ConsoleState.OpenSmall:
                 targetY = rectTransform.rect.height * 0.70f;
                 break;
-            case State.OpenBig:
-                targetY = rectTransform.rect.height * 0.05f;
+            case ConsoleState.OpenBig:
+                targetY = rectTransform.rect.height * 0.03f;
                 break;
         }
     }
